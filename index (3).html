@@ -1,0 +1,1375 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-[#f4f6f8]">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Linfox 3PL - Enterprise Inbound, Inventory & Outbound KPI Dashboard</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            infor: {
+              navy: '#1e537d',
+              teal: '#72c3be',
+              purple: '#8a6d9b',
+              dark: '#3d4852',
+              amber: '#e69f00',
+              border: '#d4d8dd',
+              headerBg: '#667380',
+              cardBg: '#ffffff',
+              gridLine: '#e6e9ec',
+              text: '#4a5568'
+            },
+            linfox: {
+              red: '#D9232E',
+              darkRed: '#a8131c',
+              yellow: '#FDB813'
+            }
+          },
+          fontFamily: {
+            sans: ['"Segoe UI"', 'Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'Consolas', 'monospace']
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Google Fonts, Lucide Icons & Chart.js -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    body {
+      font-family: 'Open Sans', 'Segoe UI', Arial, sans-serif;
+      font-size: 12px;
+      color: #333333;
+      background-color: #f0f2f5;
+    }
+    
+    /* Infor CloudSuite WMS Classic Table Styling */
+    .infor-table {
+      border-collapse: collapse;
+      width: 100%;
+    }
+    .infor-table th {
+      background-color: #6c7883;
+      color: #ffffff;
+      font-weight: 600;
+      font-size: 11px;
+      text-transform: none;
+      padding: 6px 10px;
+      border: 1px solid #57626d;
+      white-space: nowrap;
+      user-select: none;
+    }
+    .infor-table td {
+      border: 1px solid #e1e5e8;
+      padding: 5px 8px;
+      font-size: 11.5px;
+      color: #333333;
+    }
+    .infor-table tr:nth-child(even) {
+      background-color: #fbfcfd;
+    }
+    .infor-table tr:hover {
+      background-color: #eaf1f7;
+    }
+
+    /* Custom Infor Card / Widget Box */
+    .widget-container {
+      background: #ffffff;
+      border: 1px solid #d5d9de;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+    }
+    .widget-title {
+      font-size: 12.5px;
+      font-weight: 600;
+      color: #4a5568;
+    }
+
+    /* Scrollbars matching Infor WMS */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f1f1;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #b4bcc4;
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #8e98a2;
+    }
+  </style>
+</head>
+
+<body class="min-h-screen flex flex-col bg-[#f0f2f5] select-none text-slate-800">
+
+  <!-- Streamlined Dashboard Header & Tab Switcher -->
+  <header class="bg-white border-b border-[#d0d5dd] px-4 py-2 sticky top-0 z-30 shadow-xs flex flex-wrap items-center justify-between gap-3">
+    
+    <!-- Linfox Brand & Dashboard Tabs -->
+    <div class="flex items-center space-x-4">
+      <div class="flex items-center space-x-2">
+        <div class="w-6 h-6 bg-[#D9232E] text-white font-bold flex items-center justify-center text-xs rounded shadow-xs" title="Linfox Logistics">
+          <span class="font-serif italic font-extrabold text-sm">i</span>
+        </div>
+        <div>
+          <h1 class="text-xs font-bold text-slate-800 leading-tight">LINFOX 3PL LOGISTICS</h1>
+          <p class="text-[10px] text-slate-500 font-medium">CloudSuite WMS Performance Command Center</p>
+        </div>
+      </div>
+
+      <div class="h-5 w-[1px] bg-slate-300 hidden sm:block"></div>
+
+      <!-- Tab Buttons for Views -->
+      <div class="flex items-center bg-slate-100 p-0.5 rounded border border-slate-300 text-xs">
+        <button onclick="window.dashboard.switchTab('inbound')" id="tabBtn-inbound" class="px-3 py-1 font-semibold rounded bg-white text-slate-800 shadow-xs transition flex items-center gap-1.5">
+          <i data-lucide="arrow-down-to-dot" class="w-3.5 h-3.5 text-[#D9232E]"></i>
+          <span>Inbound</span>
+        </button>
+        <button onclick="window.dashboard.switchTab('inventory')" id="tabBtn-inventory" class="px-3 py-1 font-semibold rounded text-slate-600 hover:text-slate-900 transition flex items-center gap-1.5">
+          <i data-lucide="boxes" class="w-3.5 h-3.5 text-slate-500"></i>
+          <span>Inventory</span>
+        </button>
+        <button onclick="window.dashboard.switchTab('outbound')" id="tabBtn-outbound" class="px-3 py-1 font-semibold rounded text-slate-600 hover:text-slate-900 transition flex items-center gap-1.5">
+          <i data-lucide="truck" class="w-3.5 h-3.5 text-slate-500"></i>
+          <span>Outbound</span>
+        </button>
+        <button onclick="window.dashboard.switchTab('combined')" id="tabBtn-combined" class="px-3 py-1 font-semibold rounded text-slate-600 hover:text-slate-900 transition flex items-center gap-1.5">
+          <i data-lucide="layout-grid" class="w-3.5 h-3.5 text-slate-500"></i>
+          <span>All Operations</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Dashboard Content Canvas -->
+  <main class="flex-1 p-3.5 space-y-3.5 max-w-[1780px] w-full mx-auto">
+
+    <!-- ======================================================== -->
+    <!-- EXECUTIVE 3PL KPI HERO METRICS BAR                      -->
+    <!-- ======================================================== -->
+    <section class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
+      
+      <!-- KPI 1: Dock to Stock -->
+      <div class="widget-container p-2.5 rounded flex items-center justify-between border-l-4 border-l-[#1e537d]">
+        <div>
+          <span class="text-[10px] text-slate-500 font-semibold uppercase tracking-wider block">Dock to Stock</span>
+          <div class="flex items-baseline space-x-1.5 mt-0.5">
+            <span class="text-lg font-bold text-slate-800">2.1 <span class="text-xs font-normal text-slate-500">hrs</span></span>
+            <span class="text-[10px] font-semibold text-emerald-600">SLA: &lt;3.0h</span>
+          </div>
+          <span class="text-[9.5px] text-emerald-700 font-medium">▲ 18% faster than SLA</span>
+        </div>
+        <div class="w-8 h-8 rounded bg-blue-50 text-[#1e537d] flex items-center justify-center">
+          <i data-lucide="clock" class="w-4 h-4"></i>
+        </div>
+      </div>
+
+      <!-- KPI 2: On-Time In-Full (OTIF) Outbound -->
+      <div class="widget-container p-2.5 rounded flex items-center justify-between border-l-4 border-l-emerald-600">
+        <div>
+          <span class="text-[10px] text-slate-500 font-semibold uppercase tracking-wider block">OTIF Fulfillment</span>
+          <div class="flex items-baseline space-x-1.5 mt-0.5">
+            <span class="text-lg font-bold text-slate-800">98.7%</span>
+            <span class="text-[10px] font-semibold text-emerald-600">Target: 98%</span>
+          </div>
+          <span class="text-[9.5px] text-emerald-700 font-medium">▲ +0.4% MTD</span>
+        </div>
+        <div class="w-8 h-8 rounded bg-emerald-50 text-emerald-600 flex items-center justify-center">
+          <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+        </div>
+      </div>
+
+      <!-- KPI 3: Pick & Pack Accuracy -->
+      <div class="widget-container p-2.5 rounded flex items-center justify-between border-l-4 border-l-[#72c3be]">
+        <div>
+          <span class="text-[10px] text-slate-500 font-semibold uppercase tracking-wider block">Pick & Pack Accuracy</span>
+          <div class="flex items-baseline space-x-1.5 mt-0.5">
+            <span class="text-lg font-bold text-slate-800">99.94%</span>
+            <span class="text-[10px] font-semibold text-slate-400">6 Mispicks/10k</span>
+          </div>
+          <span class="text-[9.5px] text-emerald-700 font-medium">▲ Meets 6-Sigma SLA</span>
+        </div>
+        <div class="w-8 h-8 rounded bg-teal-50 text-[#1e537d] flex items-center justify-center">
+          <i data-lucide="target" class="w-4 h-4"></i>
+        </div>
+      </div>
+
+      <!-- KPI 4: Storage Capacity -->
+      <div class="widget-container p-2.5 rounded flex items-center justify-between border-l-4 border-l-amber-500">
+        <div>
+          <span class="text-[10px] text-slate-500 font-semibold uppercase tracking-wider block">Location Utilization</span>
+          <div class="flex items-baseline space-x-1.5 mt-0.5">
+            <span class="text-lg font-bold text-slate-800">76.4%</span>
+            <span class="text-[10px] font-semibold text-slate-500">18.4k / 24.1k</span>
+          </div>
+          <span class="text-[9.5px] text-amber-600 font-medium">Optimal Band (70-85%)</span>
+        </div>
+        <div class="w-8 h-8 rounded bg-amber-50 text-amber-600 flex items-center justify-center">
+          <i data-lucide="warehouse" class="w-4 h-4"></i>
+        </div>
+      </div>
+
+      <!-- KPI 5: Inbound ASN Compliance -->
+      <div class="widget-container p-2.5 rounded flex items-center justify-between border-l-4 border-l-[#8a6d9b]">
+        <div>
+          <span class="text-[10px] text-slate-500 font-semibold uppercase tracking-wider block">On-Time ASN Inbound</span>
+          <div class="flex items-baseline space-x-1.5 mt-0.5">
+            <span class="text-lg font-bold text-slate-800">95.2%</span>
+            <span class="text-[10px] font-semibold text-slate-400">142 / 149</span>
+          </div>
+          <span class="text-[9.5px] text-red-600 font-medium">▼ 4 Overdue ASNs</span>
+        </div>
+        <div class="w-8 h-8 rounded bg-purple-50 text-[#8a6d9b] flex items-center justify-center">
+          <i data-lucide="truck" class="w-4 h-4"></i>
+        </div>
+      </div>
+
+      <!-- KPI 6: Order-to-Dispatch Velocity -->
+      <div class="widget-container p-2.5 rounded flex items-center justify-between border-l-4 border-l-[#D9232E]">
+        <div>
+          <span class="text-[10px] text-slate-500 font-semibold uppercase tracking-wider block">Order-to-Dispatch</span>
+          <div class="flex items-baseline space-x-1.5 mt-0.5">
+            <span class="text-lg font-bold text-slate-800">1.8 <span class="text-xs font-normal text-slate-500">hrs</span></span>
+            <span class="text-[10px] font-semibold text-emerald-600">Cut-off 16:00</span>
+          </div>
+          <span class="text-[9.5px] text-emerald-700 font-medium">Same-Day Despatch ON</span>
+        </div>
+        <div class="w-8 h-8 rounded bg-red-50 text-[#D9232E] flex items-center justify-center">
+          <i data-lucide="zap" class="w-4 h-4"></i>
+        </div>
+      </div>
+
+    </section>
+    
+    <!-- ======================================================== -->
+    <!-- SECTION 1: INBOUND DASHBOARD (Matching Images 1 & 2)     -->
+    <!-- ======================================================== -->
+    <div id="section-inbound" class="space-y-3.5">
+      
+      <!-- Top Row: Date Controls (Left) + 3 Inbound Flow Charts -->
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-3.5">
+        
+        <!-- Left Filter Column (Cols 1-2) -->
+        <div class="md:col-span-2 space-y-3 bg-white p-3 rounded border border-[#d5d9de] shadow-xs flex flex-col justify-between">
+          <div class="space-y-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Select a Date</label>
+              <div class="relative">
+                <input type="text" id="inputDate" value="08/28/2026" onchange="window.dashboard.updateDate(this.value)" class="w-full border border-[#c4c9d0] rounded px-2 py-1.5 text-xs text-slate-800 bg-white font-medium pl-8 focus:outline-none focus:border-red-600 shadow-2xs">
+                <i data-lucide="calendar" class="w-4 h-4 text-slate-500 absolute left-2 top-2 pointer-events-none"></i>
+              </div>
+              <span class="text-[10px] text-slate-400 mt-0.5 block">MM/DD/YYYY</span>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Days History to Include</label>
+              <div class="relative">
+                <select id="daysHistory" onchange="window.dashboard.updateDaysHistory(this.value)" class="w-full border border-[#c4c9d0] rounded px-2.5 py-1.5 text-xs text-slate-800 bg-white font-medium appearance-none focus:outline-none focus:border-red-600 cursor-pointer shadow-2xs">
+                  <option value="365" selected>365</option>
+                  <option value="180">180</option>
+                  <option value="90">90</option>
+                  <option value="30">30</option>
+                </select>
+                <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-500 absolute right-2.5 top-2.5 pointer-events-none"></i>
+              </div>
+            </div>
+          </div>
+
+          <!-- Inbound Telemetry Stats Banner -->
+          <div class="p-2.5 bg-slate-50 border border-slate-200 rounded text-[11px] space-y-1">
+            <span class="text-[10px] text-slate-500 font-semibold uppercase tracking-wider block">Dock Staging Capacity</span>
+            <div class="text-base font-bold text-[#1e537d]">14 / 16 Docks Active</div>
+            <div class="text-emerald-700 font-semibold text-[10px] flex items-center gap-1">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> 98.4% On-Time Turnaround
+            </div>
+          </div>
+        </div>
+
+        <!-- Total Weight Received (Cols 3-5) -->
+        <div class="md:col-span-3 widget-container p-3 rounded flex flex-col justify-between">
+          <div class="flex items-center justify-between mb-1">
+            <span class="widget-title">Total Weight Received</span>
+            <span class="text-[10px] text-slate-400">KG</span>
+          </div>
+          <div class="h-36 w-full">
+            <canvas id="chartWeightReceived"></canvas>
+          </div>
+        </div>
+
+        <!-- Total Volume Received (Cols 6-8) -->
+        <div class="md:col-span-3 widget-container p-3 rounded flex flex-col justify-between">
+          <div class="flex items-center justify-between mb-1">
+            <span class="widget-title">Total Volume Received</span>
+            <span class="text-[10px] text-slate-400">CBM (m³)</span>
+          </div>
+          <div class="h-36 w-full">
+            <canvas id="chartVolumeReceived"></canvas>
+          </div>
+        </div>
+
+        <!-- Total Quantity Received (Cols 9-12) -->
+        <div class="md:col-span-4 widget-container p-3 rounded flex flex-col justify-between">
+          <div class="flex items-center justify-between mb-1">
+            <span class="widget-title">Total Quantity Received</span>
+            <div class="flex items-center space-x-1.5 text-slate-400">
+              <button onclick="window.dashboard.toggleFullscreen('chartQuantityReceived')" class="hover:text-slate-700" title="Full Screen"><i data-lucide="maximize-2" class="w-3.5 h-3.5"></i></button>
+            </div>
+          </div>
+          <div class="h-36 w-full">
+            <canvas id="chartQuantityReceived"></canvas>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Mid Row: ASNs Received + Current ASNs By Status + On-Time ASNs -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+        
+        <!-- ASNs Received (Grouped Bars) -->
+        <div class="widget-container p-3 rounded flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <span class="widget-title">ASNs Received</span>
+              <span class="text-[10px] text-slate-400">Monthly Volume</span>
+            </div>
+            <div class="h-44 w-full">
+              <canvas id="chartAsnsReceived"></canvas>
+            </div>
+          </div>
+          <!-- Series Legend -->
+          <div class="flex items-center justify-center space-x-5 pt-2 text-[11px] text-slate-600 border-t border-slate-100 mt-1">
+            <span class="font-semibold text-slate-400">Series:</span>
+            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-[#1e537d] inline-block"></span> Received</span>
+            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-[#72c3be] inline-block"></span> Not Received</span>
+          </div>
+        </div>
+
+        <!-- Current ASNs By Status (Donut / Pie) -->
+        <div class="widget-container p-3 rounded flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <span class="widget-title">Current ASNs By Status</span>
+              <span class="text-[10px] text-slate-400">Active Pool Breakdown</span>
+            </div>
+            <div class="h-44 w-full relative flex items-center justify-center">
+              <canvas id="chartAsnStatus"></canvas>
+            </div>
+          </div>
+          <!-- Infor Status Legend -->
+          <div class="flex items-center justify-center flex-wrap gap-x-3 gap-y-1 pt-2 text-[11px] text-slate-600 border-t border-slate-100 mt-1">
+            <span class="font-semibold text-slate-400">Status Description:</span>
+            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-[#1e537d]"></span> Closed (49.44%)</span>
+            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-[#72c3be]"></span> In Receiving (20.45%)</span>
+            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-[#8a6d9b]"></span> New (26.02%)</span>
+          </div>
+        </div>
+
+        <!-- On-Time ASNs (Spline / Line Chart) -->
+        <div class="widget-container p-3 rounded flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <span class="widget-title">On-Time ASNs</span>
+              <span class="text-[10px] text-slate-400">Carrier Compliance Trend</span>
+            </div>
+            <div class="h-44 w-full">
+              <canvas id="chartOnTimeAsns"></canvas>
+            </div>
+          </div>
+          <!-- Series Legend -->
+          <div class="flex items-center justify-center space-x-5 pt-2 text-[11px] text-slate-600 border-t border-slate-100 mt-1">
+            <span class="font-semibold text-slate-400">Series:</span>
+            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-[#1e537d]"></span> On-Time ASN's</span>
+            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-[#72c3be]"></span> Late ASN's</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Bottom Row: Total Cases Received + Late Receipts Infor Table Grid (Matching Screenshot 2) -->
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-3.5">
+        
+        <!-- Total Cases Received (Cols 1-5) -->
+        <div class="md:col-span-5 widget-container p-3 rounded flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <span class="widget-title">Total Cases Received</span>
+              <span class="text-[10px] text-slate-400">Expected vs Actual</span>
+            </div>
+            <div class="h-44 w-full">
+              <canvas id="chartCasesReceived"></canvas>
+            </div>
+          </div>
+          <!-- Series Legend -->
+          <div class="flex items-center justify-center space-x-5 pt-2 text-[11px] text-slate-600 border-t border-slate-100 mt-1">
+            <span class="font-semibold text-slate-400">Series:</span>
+            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-[#1e537d]"></span> Cases Expected</span>
+            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-[#72c3be]"></span> Cases Received</span>
+          </div>
+        </div>
+
+        <!-- Late Receipts Infor Data Grid (Cols 6-12) -->
+        <div class="md:col-span-7 widget-container p-3 rounded flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="widget-title flex items-center gap-2">
+                <span>Late Receipts</span>
+                <span class="px-1.5 py-0.5 bg-red-100 text-red-700 text-[10px] rounded font-semibold border border-red-200">Action Required</span>
+              </span>
+            </div>
+
+            <!-- Infor Styled Table (Clean Read-Only Telemetry matching Image 2) -->
+            <div class="overflow-x-auto border border-[#c4c9d0] rounded max-h-44">
+              <table class="infor-table">
+                <thead>
+                  <tr>
+                    <th class="cursor-pointer text-left" onclick="window.dashboard.sortLateTable(0)">ASN/Receipt <i data-lucide="arrow-up" class="w-2.5 h-2.5 inline ml-1"></i></th>
+                    <th class="cursor-pointer text-left" onclick="window.dashboard.sortLateTable(1)">Owner <i data-lucide="chevrons-up-down" class="w-2.5 h-2.5 inline ml-1"></i></th>
+                    <th class="cursor-pointer text-left" onclick="window.dashboard.sortLateTable(2)">Status <i data-lucide="chevrons-up-down" class="w-2.5 h-2.5 inline ml-1"></i></th>
+                    <th class="cursor-pointer text-left" onclick="window.dashboard.sortLateTable(3)">Expected Receipt Date <i data-lucide="chevrons-up-down" class="w-2.5 h-2.5 inline ml-1"></i></th>
+                  </tr>
+                </thead>
+                <tbody id="lateReceiptsTbody">
+                  <tr>
+                    <td class="font-mono text-blue-700 font-semibold">0000000512</td>
+                    <td>DS4</td>
+                    <td><span class="px-1.5 py-0.5 bg-purple-100 text-purple-700 rounded text-[10px] font-semibold">New</span></td>
+                    <td class="font-mono text-slate-700">1899-12-30</td>
+                  </tr>
+                  <tr>
+                    <td class="font-mono text-blue-700 font-semibold">0000000216</td>
+                    <td>DS1</td>
+                    <td><span class="px-1.5 py-0.5 bg-purple-100 text-purple-700 rounded text-[10px] font-semibold">New</span></td>
+                    <td class="font-mono text-slate-700">2014-11-03</td>
+                  </tr>
+                  <tr>
+                    <td class="font-mono text-blue-700 font-semibold">0000000221</td>
+                    <td>DS1</td>
+                    <td><span class="px-1.5 py-0.5 bg-purple-100 text-purple-700 rounded text-[10px] font-semibold">New</span></td>
+                    <td class="font-mono text-slate-700">2014-11-13</td>
+                  </tr>
+                  <tr>
+                    <td class="font-mono text-blue-700 font-semibold">0000000228</td>
+                    <td>DS2</td>
+                    <td><span class="px-1.5 py-0.5 bg-amber-100 text-amber-800 rounded text-[10px] font-semibold">In Receiving</span></td>
+                    <td class="font-mono text-slate-700">2026-08-28</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="pt-2 flex items-center justify-between text-[11px] text-slate-500">
+            <span>Showing 4 overdue ASNs in dock queue</span>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- SECTION 2: INVENTORY DASHBOARD (Matching Image 3)        -->
+    <!-- ======================================================== -->
+    <div id="section-inventory" class="space-y-3.5 hidden">
+      
+      <!-- Top Row: Location Analysis + Expected Stockout Table -->
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-3.5">
+        
+        <!-- Location Analysis (Horizontal Stacked Bar Chart) -->
+        <div class="md:col-span-6 widget-container p-3.5 rounded flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="widget-title">Location Analysis</span>
+              
+              <!-- Area Select Dropdown -->
+              <div class="relative">
+                <select id="locationAreaSelect" onchange="window.dashboard.updateLocationArea(this.value)" class="border border-[#c4c9d0] rounded px-2.5 py-1 text-xs text-slate-700 bg-white font-medium italic pr-7 cursor-pointer shadow-2xs">
+                  <option value="all">Select Area</option>
+                  <option value="highBay">Area A (High Bay Racking)</option>
+                  <option value="mezzanine">Area B (Mezzanine Pick)</option>
+                  <option value="coldChain">Area C (Temperature Controlled)</option>
+                </select>
+                <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400 absolute right-1.5 top-2 pointer-events-none"></i>
+              </div>
+            </div>
+
+            <div class="h-60 w-full">
+              <canvas id="chartLocationAnalysis"></canvas>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-center space-x-6 pt-2 text-[11px] text-slate-600 border-t border-slate-100 mt-2">
+            <span class="font-semibold text-slate-400">Series:</span>
+            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded bg-[#1e537d]"></span> Taken Location</span>
+            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded bg-[#72c3be]"></span> Empty Location</span>
+          </div>
+        </div>
+
+        <!-- Expected Stockout Infor Grid (Screenshot 3 Right Table) -->
+        <div class="md:col-span-6 widget-container p-3.5 rounded flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="widget-title flex items-center gap-2">
+                <span>Expected Stockout</span>
+                <span class="px-1.5 py-0.5 bg-red-100 text-red-700 text-[10px] rounded font-semibold border border-red-200">Critical Alerts</span>
+              </span>
+            </div>
+
+            <!-- Infor Styled Grid with Exact Columns from Image 3 -->
+            <div class="overflow-x-auto border border-[#c4c9d0] rounded max-h-60">
+              <table class="infor-table">
+                <thead>
+                  <tr>
+                    <th class="cursor-pointer text-left">Owner ▾</th>
+                    <th class="cursor-pointer text-left">Item ▾</th>
+                    <th class="cursor-pointer text-left">Description ▾</th>
+                    <th class="cursor-pointer text-right">Order Demand ▾</th>
+                    <th class="cursor-pointer text-right">Available Quantity ▾</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="font-semibold">DS1</td>
+                    <td class="font-mono text-blue-700 font-semibold">300240</td>
+                    <td class="truncate max-w-[190px]" title="AD240 Component Item - Lot Rev">AD240 Component Item - Lot Rev ...</td>
+                    <td class="text-right font-mono font-medium">80</td>
+                    <td class="text-right font-mono font-bold text-red-600 bg-red-50">-7</td>
+                  </tr>
+                  <tr>
+                    <td class="font-semibold">DS1</td>
+                    <td class="font-mono text-blue-700 font-semibold">300241</td>
+                    <td class="truncate max-w-[190px]" title="AD241 Component Item - Lot Rev">AD241 Component Item - Lot Rev ...</td>
+                    <td class="text-right font-mono font-medium">80</td>
+                    <td class="text-right font-mono font-bold text-red-600 bg-red-50">-5</td>
+                  </tr>
+                  <tr>
+                    <td class="font-semibold">DS1</td>
+                    <td class="font-mono text-blue-700 font-semibold">BUNZL1</td>
+                    <td>Bunzl Item 1</td>
+                    <td class="text-right font-mono font-medium">260</td>
+                    <td class="text-right font-mono font-bold text-emerald-700">104</td>
+                  </tr>
+                  <tr>
+                    <td class="font-semibold">DS1</td>
+                    <td class="font-mono text-blue-700 font-semibold">BUNZL2</td>
+                    <td>Bunzl Item 2</td>
+                    <td class="text-right font-mono font-medium">10</td>
+                    <td class="text-right font-mono font-bold text-amber-700">1</td>
+                  </tr>
+                  <tr>
+                    <td class="font-semibold">DS2</td>
+                    <td class="font-mono text-blue-700 font-semibold">LFX-889</td>
+                    <td>Linfox Pallet Wrap 500mm</td>
+                    <td class="text-right font-mono font-medium">45</td>
+                    <td class="text-right font-mono font-bold text-emerald-700">320</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="pt-2 flex items-center justify-between text-[11px] text-slate-500">
+            <span>Critical stockouts: <strong>2 SKUs in negative deficit</strong></span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Bottom Row: Cycle Count Summary & Cycle Count Accuracy -->
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-3.5">
+        
+        <!-- Cycle Count Summary (Bar Chart with values on top) -->
+        <div class="md:col-span-6 widget-container p-3.5 rounded flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <span class="widget-title">Cycle Count Summary</span>
+              <span class="text-[10px] text-slate-400">Locations Counted</span>
+            </div>
+            <div class="h-48 w-full">
+              <canvas id="chartCycleSummary"></canvas>
+            </div>
+          </div>
+          <!-- Series Legend -->
+          <div class="flex items-center justify-center space-x-5 pt-2 text-[11px] text-slate-600 border-t border-slate-100 mt-2">
+            <span class="font-semibold text-slate-400">Series:</span>
+            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded bg-[#1e537d]"></span> Cycle Count</span>
+          </div>
+        </div>
+
+        <!-- Cycle Count Accuracy (Bar Chart with % labels on top) -->
+        <div class="md:col-span-6 widget-container p-3.5 rounded flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <span class="widget-title">Cycle Count Accuracy</span>
+              <span class="text-[10px] text-emerald-600 font-semibold">Target: ≥99.5%</span>
+            </div>
+            <div class="h-48 w-full">
+              <canvas id="chartCycleAccuracy"></canvas>
+            </div>
+          </div>
+          <!-- Series Legend -->
+          <div class="flex items-center justify-center space-x-5 pt-2 text-[11px] text-slate-600 border-t border-slate-100 mt-2">
+            <span class="font-semibold text-slate-400">Series:</span>
+            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded bg-[#1e537d]"></span> Accuracy %</span>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- SECTION 3: OUTBOUND DASHBOARD (3PL Fulfilment & Shipping) -->
+    <!-- ======================================================== -->
+    <div id="section-outbound" class="space-y-3.5 hidden">
+      
+      <!-- Outbound Row 1: Pick Throughput & Wave Status Pipeline -->
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-3.5">
+        
+        <!-- Hourly Pick & Pack Rate vs Labor Standard (Cols 1-7) -->
+        <div class="md:col-span-7 widget-container p-3.5 rounded flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="widget-title">Hourly Pick & Pack Throughput</span>
+              <span class="text-[10px] text-slate-500 font-medium">Standard: <strong>320 Units/Hr</strong></span>
+            </div>
+            <div class="h-52 w-full">
+              <canvas id="chartOutboundThroughput"></canvas>
+            </div>
+          </div>
+          <div class="flex items-center justify-center space-x-5 pt-2 text-[11px] text-slate-600 border-t border-slate-100 mt-1">
+            <span class="font-semibold text-slate-400">Series:</span>
+            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded bg-[#1e537d]"></span> Actual Units Picked</span>
+            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded bg-[#72c3be]"></span> Engineered Standard (Target)</span>
+          </div>
+        </div>
+
+        <!-- Wave Fulfillment Stage Pipeline (Cols 8-12) -->
+        <div class="md:col-span-5 widget-container p-3.5 rounded flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="widget-title">Wave Fulfillment Status</span>
+              <span class="text-[10px] text-slate-400">Active Daily Waves</span>
+            </div>
+            <div class="h-52 w-full flex items-center justify-center">
+              <canvas id="chartWaveStages"></canvas>
+            </div>
+          </div>
+          <div class="flex items-center justify-center flex-wrap gap-x-3 gap-y-1 pt-2 text-[11px] text-slate-600 border-t border-slate-100 mt-1">
+            <span class="font-semibold text-slate-400">Status:</span>
+            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded bg-[#1e537d]"></span> Picking (32%)</span>
+            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded bg-[#72c3be]"></span> Pack/QC (24%)</span>
+            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded bg-[#8a6d9b]"></span> Staged (28%)</span>
+            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded bg-[#e69f00]"></span> Released (16%)</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Outbound Row 2: Carrier SLA Adherence & Dispatch Queue Table -->
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-3.5">
+        
+        <!-- Outbound Carrier Breakdown & Freight SLA (Cols 1-5) -->
+        <div class="md:col-span-5 widget-container p-3.5 rounded flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="widget-title">Carrier Volume & SLA Compliance</span>
+              <span class="text-[10px] text-emerald-600 font-semibold">99.1% On-Time Carrier Pull</span>
+            </div>
+            <div class="h-56 w-full">
+              <canvas id="chartCarrierSla"></canvas>
+            </div>
+          </div>
+          <div class="flex items-center justify-center space-x-5 pt-2 text-[11px] text-slate-600 border-t border-slate-100 mt-1">
+            <span class="font-semibold text-slate-400">Series:</span>
+            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded bg-[#1e537d]"></span> Dispatched Consignments</span>
+            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded bg-[#72c3be]"></span> SLA Target %</span>
+          </div>
+        </div>
+
+        <!-- Outbound Dispatches Infor Grid (Cols 6-12) -->
+        <div class="md:col-span-7 widget-container p-3.5 rounded flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="widget-title flex items-center gap-2">
+                <span>Active Outbound Dispatch Queue</span>
+                <span class="px-1.5 py-0.5 bg-amber-100 text-amber-800 text-[10px] rounded font-semibold border border-amber-200">SLA Priority</span>
+              </span>
+            </div>
+
+            <!-- Infor Grid for Outbound Orders -->
+            <div class="overflow-x-auto border border-[#c4c9d0] rounded max-h-56">
+              <table class="infor-table">
+                <thead>
+                  <tr>
+                    <th class="cursor-pointer text-left">Order / Wave ▾</th>
+                    <th class="cursor-pointer text-left">Customer / DC ▾</th>
+                    <th class="cursor-pointer text-left">Carrier ▾</th>
+                    <th class="cursor-pointer text-center">Cut-off ▾</th>
+                    <th class="cursor-pointer text-center">Status ▾</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="font-mono text-blue-700 font-semibold">SO-892110</td>
+                    <td>Woolworths NDC</td>
+                    <td>Linfox Direct Fleet</td>
+                    <td class="text-center font-mono text-red-600 font-semibold">14:30 (42m left)</td>
+                    <td class="text-center"><span class="px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded text-[10px] font-semibold">Picking (88%)</span></td>
+                  </tr>
+                  <tr>
+                    <td class="font-mono text-blue-700 font-semibold">SO-892114</td>
+                    <td>Coles Regional DC</td>
+                    <td>Linfox Direct Fleet</td>
+                    <td class="text-center font-mono text-slate-700">16:00</td>
+                    <td class="text-center"><span class="px-1.5 py-0.5 bg-amber-100 text-amber-800 rounded text-[10px] font-semibold">QC Check</span></td>
+                  </tr>
+                  <tr>
+                    <td class="font-mono text-blue-700 font-semibold">SO-892119</td>
+                    <td>Bunnings Warehouse</td>
+                    <td>Toll Priority</td>
+                    <td class="text-center font-mono text-slate-700">17:00</td>
+                    <td class="text-center"><span class="px-1.5 py-0.5 bg-purple-100 text-purple-700 rounded text-[10px] font-semibold">Staged (Dock 04)</span></td>
+                  </tr>
+                  <tr>
+                    <td class="font-mono text-blue-700 font-semibold">SO-892122</td>
+                    <td>Target Australia</td>
+                    <td>StarTrack Express</td>
+                    <td class="text-center font-mono text-slate-700">18:00</td>
+                    <td class="text-center"><span class="px-1.5 py-0.5 bg-slate-100 text-slate-700 rounded text-[10px] font-semibold">Wave Released</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="pt-2 flex items-center justify-between text-[11px] text-slate-500">
+            <span>Same-Day Despatch Target: <strong>99.4% achieved today</strong></span>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- Application Logic & Chart Initialization Script -->
+  <script>
+    // Infor CloudSuite Core Color Tokens
+    const INFOR_NAVY = '#1e537d';
+    const INFOR_TEAL = '#72c3be';
+    const INFOR_PURPLE = '#8a6d9b';
+    const INFOR_DARK = '#3d4852';
+    const INFOR_AMBER = '#e69f00';
+    const INFOR_GRID = '#e9ecf0';
+    const INFOR_TEXT = '#64748b';
+
+    // Global Chart Registry
+    const charts = {};
+
+    // Standard Slanted Dates Label Generator matching screenshots
+    const inboundDates = [
+      '2025-08-28', '2025-09-02', '2025-09-08', '2025-09-16', '2025-09-23', 
+      '2025-10-03', '2025-10-16', '2025-10-20', '2025-10-29', '2025-11-11', 
+      '2025-11-12', '2025-11-13', '2025-11-14', '2025-11-19', '2026-08-28'
+    ];
+
+    const slantedScaleBase = {
+      x: {
+        grid: { display: false },
+        ticks: {
+          color: INFOR_TEXT,
+          font: { size: 9 },
+          maxRotation: 55,
+          minRotation: 50,
+          autoSkip: false
+        }
+      },
+      y: {
+        grid: { color: INFOR_GRID, drawBorder: false },
+        ticks: {
+          color: INFOR_TEXT,
+          font: { size: 9.5 }
+        }
+      }
+    };
+
+    // Chart.js Plugin to draw numerical/percentage values above bars (Used in Cycle Count charts)
+    const topValuesPlugin = {
+      id: 'topValuesPlugin',
+      afterDatasetsDraw(chart, args, options) {
+        const { ctx, data } = chart;
+        ctx.save();
+        ctx.font = 'bold 9px "Segoe UI", sans-serif';
+        ctx.fillStyle = '#4a5568';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'bottom';
+
+        chart.data.datasets.forEach((dataset, datasetIndex) => {
+          const meta = chart.getDatasetMeta(datasetIndex);
+          meta.data.forEach((bar, index) => {
+            const val = dataset.data[index];
+            if (val !== undefined && val !== null) {
+              const text = options.isPercent ? `${val}%` : `${val}`;
+              ctx.fillText(text, bar.x, bar.y - 2);
+            }
+          });
+        });
+        ctx.restore();
+      }
+    };
+
+    // Initialize View 1: Inbound Operations Charts (Screenshots 1 & 2)
+    function initInboundCharts() {
+      if (charts.weight) return;
+
+      // 1. Total Weight Received
+      const ctxWeight = document.getElementById('chartWeightReceived').getContext('2d');
+      charts.weight = new Chart(ctxWeight, {
+        type: 'bar',
+        data: {
+          labels: inboundDates,
+          datasets: [{
+            data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 120, 240, 580, 1400, 180, 20],
+            backgroundColor: INFOR_NAVY,
+            barPercentage: 0.6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            ...slantedScaleBase,
+            y: {
+              ...slantedScaleBase.y,
+              suggestedMax: 20000,
+              ticks: {
+                font: { size: 9 },
+                callback: function(v) { return v === 0 ? '0' : (v/1000) + 'K'; }
+              }
+            }
+          }
+        }
+      });
+
+      // 2. Total Volume Received
+      const ctxVol = document.getElementById('chartVolumeReceived').getContext('2d');
+      charts.volume = new Chart(ctxVol, {
+        type: 'bar',
+        data: {
+          labels: inboundDates,
+          datasets: [{
+            data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 1200, 2500, 6800, 14500, 2100, 100],
+            backgroundColor: INFOR_NAVY,
+            barPercentage: 0.6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            ...slantedScaleBase,
+            y: {
+              ...slantedScaleBase.y,
+              suggestedMax: 200000,
+              ticks: {
+                font: { size: 9 },
+                callback: function(v) { return v === 0 ? '0' : (v >= 1000 ? (v/1000) + 'K' : v); }
+              }
+            }
+          }
+        }
+      });
+
+      // 3. Total Quantity Received
+      const ctxQty = document.getElementById('chartQuantityReceived').getContext('2d');
+      charts.quantity = new Chart(ctxQty, {
+        type: 'bar',
+        data: {
+          labels: inboundDates,
+          datasets: [{
+            data: [10, 0, 0, 0, 0, 40, 20, 0, 25, 60, 90, 240, 520, 1850, 40],
+            backgroundColor: INFOR_NAVY,
+            barPercentage: 0.6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            ...slantedScaleBase,
+            y: {
+              ...slantedScaleBase.y,
+              suggestedMax: 3200,
+              ticks: {
+                font: { size: 9 },
+                stepSize: 1600
+              }
+            }
+          }
+        }
+      });
+
+      // 4. ASNs Received (Grouped Bar Chart)
+      const monthsLabels = ['2025-08', '2025-09', '2025-10', '2025-11', '2025-12', '2026-01', '2026-02', '2026-03', '2026-04', '2026-05', '2026-06', '2026-07', '2026-08'];
+      const ctxAsns = document.getElementById('chartAsnsReceived').getContext('2d');
+      charts.asns = new Chart(ctxAsns, {
+        type: 'bar',
+        data: {
+          labels: monthsLabels,
+          datasets: [
+            {
+              label: 'Received',
+              data: [1, 3, 6, 20, 0, 20, 7, 20, 19, 20, 0, 0, 3],
+              backgroundColor: INFOR_NAVY,
+              barPercentage: 0.7,
+              categoryPercentage: 0.8
+            },
+            {
+              label: 'Not Received',
+              data: [0, 4, 1, 1, 0, 0, 8, 4, 2, 2, 0, 0, 1],
+              backgroundColor: INFOR_TEAL,
+              barPercentage: 0.7,
+              categoryPercentage: 0.8
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            ...slantedScaleBase,
+            y: {
+              ...slantedScaleBase.y,
+              max: 20,
+              ticks: { stepSize: 4 }
+            }
+          }
+        }
+      });
+
+      // 5. Current ASNs By Status (Donut / Pie Chart)
+      const ctxStatus = document.getElementById('chartAsnStatus').getContext('2d');
+      charts.status = new Chart(ctxStatus, {
+        type: 'pie',
+        data: {
+          labels: ['Closed', 'In Receiving', 'New'],
+          datasets: [{
+            data: [49.44, 20.45, 26.02],
+            backgroundColor: [INFOR_NAVY, INFOR_TEAL, INFOR_PURPLE],
+            borderColor: '#ffffff',
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: function(ctx) { return ` ${ctx.label}: ${ctx.raw}%`; }
+              }
+            }
+          }
+        }
+      });
+
+      // 6. On-Time ASNs (Spline / Line Chart)
+      const ctxOnTime = document.getElementById('chartOnTimeAsns').getContext('2d');
+      charts.onTime = new Chart(ctxOnTime, {
+        type: 'line',
+        data: {
+          labels: inboundDates,
+          datasets: [
+            {
+              label: "On-Time ASN's",
+              data: [2, 2, 2, 2, 2, 3, 2, 4, 3, 18, 4, 2, 3, 2, 2],
+              borderColor: INFOR_NAVY,
+              backgroundColor: 'rgba(30, 83, 125, 0.15)',
+              fill: true,
+              tension: 0.3,
+              pointRadius: 3,
+              pointBackgroundColor: INFOR_NAVY
+            },
+            {
+              label: "Late ASN's",
+              data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 1, 0, 0, 0, 0],
+              borderColor: INFOR_TEAL,
+              backgroundColor: 'transparent',
+              borderDash: [3, 3],
+              tension: 0.3,
+              pointRadius: 2.5,
+              pointBackgroundColor: INFOR_TEAL
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            ...slantedScaleBase,
+            y: {
+              ...slantedScaleBase.y,
+              max: 20,
+              ticks: { stepSize: 5 }
+            }
+          }
+        }
+      });
+
+      // 7. Total Cases Received
+      const ctxCases = document.getElementById('chartCasesReceived').getContext('2d');
+      charts.cases = new Chart(ctxCases, {
+        type: 'bar',
+        data: {
+          labels: inboundDates,
+          datasets: [
+            {
+              label: 'Cases Expected',
+              data: [50, 0, 0, 0, 0, 2400, 800, 0, 0, 0, 0, 0, 0, 0, 0],
+              backgroundColor: INFOR_NAVY,
+              barPercentage: 0.6
+            },
+            {
+              label: 'Cases Received',
+              data: [50, 0, 0, 0, 0, 2380, 790, 0, 0, 0, 0, 0, 0, 0, 0],
+              backgroundColor: INFOR_TEAL,
+              barPercentage: 0.6
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            ...slantedScaleBase,
+            y: {
+              ...slantedScaleBase.y,
+              suggestedMax: 4000,
+              ticks: {
+                font: { size: 9 },
+                callback: function(v) { return v === 0 ? '0' : (v >= 1000 ? (v/1000) + 'K' : v); }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // Initialize View 2: Inventory Charts (Screenshot 3)
+    function initInventoryCharts() {
+      if (charts.locationAnalysis) return;
+
+      // 1. Location Analysis (Horizontal Stacked Bar)
+      const ctxLoc = document.getElementById('chartLocationAnalysis').getContext('2d');
+      charts.locationAnalysis = new Chart(ctxLoc, {
+        type: 'bar',
+        data: {
+          labels: ['AA', 'AC', 'AD', 'AE', 'AF', 'ALL', 'AREA A', 'AREA B', 'AREA C'],
+          datasets: [
+            {
+              label: 'Taken Location',
+              data: [22, 38, 24, 25, 23, 31, 0, 0, 0],
+              backgroundColor: INFOR_NAVY,
+              barPercentage: 0.65
+            },
+            {
+              label: 'Empty Location',
+              data: [78, 62, 76, 75, 77, 69, 100, 100, 100],
+              backgroundColor: INFOR_TEAL,
+              barPercentage: 0.65
+            }
+          ]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: {
+              stacked: true,
+              max: 100,
+              grid: { color: INFOR_GRID },
+              ticks: { font: { size: 9 }, callback: function(v) { return v + '%'; } }
+            },
+            y: {
+              stacked: true,
+              grid: { display: false },
+              ticks: { font: { size: 9.5, weight: 'bold' }, color: '#4a5568' }
+            }
+          }
+        }
+      });
+
+      // 2. Cycle Count Summary (with top labels)
+      const cycleDates = ['2025-08-28', '2026-01-20', '2026-02-08', '2026-03-04', '2026-03-26', '2026-04-03', '2026-05-09'];
+      const ctxCycleSum = document.getElementById('chartCycleSummary').getContext('2d');
+      charts.cycleSummary = new Chart(ctxCycleSum, {
+        type: 'bar',
+        data: {
+          labels: cycleDates,
+          datasets: [{
+            data: [3, 3, 1, 1, 1, 7, 1],
+            backgroundColor: INFOR_NAVY,
+            barPercentage: 0.48
+          }]
+        },
+        plugins: [topValuesPlugin],
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            topValuesPlugin: { isPercent: false }
+          },
+          scales: {
+            ...slantedScaleBase,
+            y: {
+              ...slantedScaleBase.y,
+              max: 8,
+              ticks: { stepSize: 2 }
+            }
+          }
+        }
+      });
+
+      // 3. Cycle Count Accuracy (with % labels on top)
+      const ctxCycleAcc = document.getElementById('chartCycleAccuracy').getContext('2d');
+      charts.cycleAccuracy = new Chart(ctxCycleAcc, {
+        type: 'bar',
+        data: {
+          labels: cycleDates,
+          datasets: [{
+            data: [100, 100, 100, 100, 100, 71.4, 100],
+            backgroundColor: INFOR_NAVY,
+            barPercentage: 0.48
+          }]
+        },
+        plugins: [topValuesPlugin],
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            topValuesPlugin: { isPercent: true }
+          },
+          scales: {
+            ...slantedScaleBase,
+            y: {
+              ...slantedScaleBase.y,
+              max: 120,
+              ticks: {
+                stepSize: 20,
+                callback: function(v) { return v + '%'; }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // Initialize View 3: Outbound Operations Charts
+    function initOutboundCharts() {
+      if (charts.throughput) return;
+
+      // 1. Hourly Pick Throughput vs Standard
+      const hours = ['06:00', '08:00', '10:00', '12:00', '14:00', '16:00', '18:00', '20:00'];
+      const ctxThroughput = document.getElementById('chartOutboundThroughput').getContext('2d');
+      charts.throughput = new Chart(ctxThroughput, {
+        type: 'bar',
+        data: {
+          labels: hours,
+          datasets: [
+            {
+              label: 'Actual Units Picked',
+              data: [180, 310, 360, 290, 420, 390, 240, 110],
+              backgroundColor: INFOR_NAVY,
+              barPercentage: 0.6
+            },
+            {
+              label: 'Engineered Standard Target',
+              data: [320, 320, 320, 320, 320, 320, 320, 320],
+              type: 'line',
+              borderColor: INFOR_TEAL,
+              borderWidth: 2,
+              borderDash: [4, 4],
+              pointRadius: 3,
+              fill: false
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            ...slantedScaleBase,
+            y: {
+              ...slantedScaleBase.y,
+              max: 500,
+              ticks: { stepSize: 100 }
+            }
+          }
+        }
+      });
+
+      // 2. Wave Fulfillment Stages Donut
+      const ctxWave = document.getElementById('chartWaveStages').getContext('2d');
+      charts.wave = new Chart(ctxWave, {
+        type: 'doughnut',
+        data: {
+          labels: ['Picking', 'Pack & QC', 'Staged at Dock', 'Released'],
+          datasets: [{
+            data: [32, 24, 28, 16],
+            backgroundColor: [INFOR_NAVY, INFOR_TEAL, INFOR_PURPLE, INFOR_AMBER],
+            borderColor: '#ffffff',
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: function(ctx) { return ` ${ctx.label}: ${ctx.raw}%`; }
+              }
+            }
+          },
+          cutout: '65%'
+        }
+      });
+
+      // 3. Carrier Volume & SLA Compliance
+      const carriers = ['Linfox Fleet', 'StarTrack', 'Toll Priority', 'Border Express'];
+      const ctxCarrier = document.getElementById('chartCarrierSla').getContext('2d');
+      charts.carrier = new Chart(ctxCarrier, {
+        type: 'bar',
+        data: {
+          labels: carriers,
+          datasets: [
+            {
+              label: 'Dispatched Consignments',
+              data: [1420, 890, 640, 310],
+              backgroundColor: INFOR_NAVY,
+              barPercentage: 0.55
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            ...slantedScaleBase,
+            y: {
+              ...slantedScaleBase.y,
+              max: 1600,
+              ticks: { stepSize: 400 }
+            }
+          }
+        }
+      });
+    }
+
+    // Dashboard Interaction Controller
+    window.dashboard = {
+      switchTab: function(tabKey) {
+        const secInbound = document.getElementById('section-inbound');
+        const secInventory = document.getElementById('section-inventory');
+        const secOutbound = document.getElementById('section-outbound');
+        
+        // Reset tab button styling
+        ['inbound', 'inventory', 'outbound', 'combined'].forEach(t => {
+          const btn = document.getElementById('tabBtn-' + t);
+          if (btn) {
+            btn.className = "px-3 py-1 font-semibold rounded text-slate-600 hover:text-slate-900 transition flex items-center gap-1.5";
+          }
+        });
+
+        // Activate clicked tab
+        const activeBtn = document.getElementById('tabBtn-' + tabKey);
+        if (activeBtn) {
+          activeBtn.className = "px-3 py-1 font-semibold rounded bg-white text-slate-800 shadow-xs transition flex items-center gap-1.5";
+        }
+
+        if (tabKey === 'inbound') {
+          secInbound.classList.remove('hidden');
+          secInventory.classList.add('hidden');
+          secOutbound.classList.add('hidden');
+        } else if (tabKey === 'inventory') {
+          secInbound.classList.add('hidden');
+          secInventory.classList.remove('hidden');
+          secOutbound.classList.add('hidden');
+          setTimeout(() => initInventoryCharts(), 50);
+        } else if (tabKey === 'outbound') {
+          secInbound.classList.add('hidden');
+          secInventory.classList.add('hidden');
+          secOutbound.classList.remove('hidden');
+          setTimeout(() => initOutboundCharts(), 50);
+        } else if (tabKey === 'combined') {
+          secInbound.classList.remove('hidden');
+          secInventory.classList.remove('hidden');
+          secOutbound.classList.remove('hidden');
+          setTimeout(() => {
+            initInventoryCharts();
+            initOutboundCharts();
+          }, 50);
+        }
+      },
+
+      updateDaysHistory: function(days) {
+        // Triggered on filter select
+      },
+
+      updateDate: function(date) {
+        // Triggered on date change
+      },
+
+      updateLocationArea: function(area) {
+        // Triggered on location area change
+      },
+
+      toggleFullscreen: function(canvasId) {
+        const canvas = document.getElementById(canvasId);
+        if (canvas.requestFullscreen) {
+          canvas.requestFullscreen();
+        }
+      },
+
+      sortLateTable: function(colIndex) {
+        // Table sort column handler
+      }
+    };
+
+    // Auto-run on DOM ready
+    window.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+      initInboundCharts();
+    });
+  </script>
+</body>
+</html>
